@@ -66,7 +66,6 @@ $(bootblock): $(call toobj,$(bootfiles)) | $(call totarget,sign)
 ```
 gcc -Iboot/ -fno-builtin -Wall -ggdb -m32 -gstabs -nostdinc  -fno-stack-protector -Ilibs/ -Os -nostdinc -c boot/bootasm.S -o obj/boot/bootasm.o
 ```
-这里的参数在之前都已经解释过了。  
 
 　　**sign**转化为目标则是bin/sign，通过gcc由sign.c编译而成
 ```
@@ -76,7 +75,7 @@ gcc -g -Wall -O2 obj/sign/tools/sign.o -o bin/sign
 这里新增的参数为
 + -O2 对代码进行优化
 
-　　解决了依赖文件的问题后，就可以查看bootblock的生成了。这里的命令有多条，下面逐一解释。  
+　　下面查看bootblock的生成了。这里的命令有多条，下面逐一解释。  
 1.首先编译生成bootblock.o。这里编译时执行的实际命令如下：
 ```
 ld -m elf_i386 -nostdlib -N -e start -Ttext 0x7C00 obj/boot/bootasm.o obj/boot/bootmain.o -o obj/bootblock.o
@@ -465,3 +464,54 @@ struct gatedesc {
 实现思路：  
 　　在trap_dispatch函数中，首先ticks全局变量加1，然后判断是否到达需要输出的条件（即ticks == TICK_NUM），
 如果满足，则调用print_ticks()输出，并将ticks置0，等待下一次输出。
+
+
+##练习七##
+
+
+`/kern/trap/trap.c`中：  
+
+`idt_init`中，将用户态调用SWITCH_TOK中断的权限打开。
+```
+	SETGATE(idt[T_SWITCH_TOK], 1, KERNEL_CS, __vectors[T_SWITCH_TOK], 3);
+```
+
+`trap_dispatch`中：
+```
+case T_SWITCH_TOU:
+		tf->tf_cs = USER_CS;
+		tf->tf_ds = USER_DS;
+		tf->tf_es = USER_DS;
+		tf->tf_ss = USER_DS;
+		// 改变输出所需要的权限，使得用户可以写
+		tf->tf_eflags |= 0x3000;
+		break;
+case T_SWITCH_TOK:
+		tf->tf_cs = KERNEL_CS;
+		tf->tf_ds = KERNEL_DS;
+		tf->tf_es = KERNEL_DS;
+		// panic("T_SWITCH_** ??\n");
+		break;
+```
+
+`/kern/init/init.c`中：  
+
+`lab1_switch_to_user`中调用`T_SWITCH_TOU`：
+```
+asm volatile (
+		"sub $0x8, %%esp \n"
+		"int %0 \n"
+		"movl %%ebp, %%esp"
+		:
+		: "i"(T_SWITCH_TOU)
+);
+```
+`lab1_switch_to_kernel`中调用`T_SWITCH_TOK`：
+```
+asm volatile (
+		"int %0 \n"
+		"movl %%ebp, %%esp \n"
+		:
+		: "i"(T_SWITCH_TOK)
+);
+```

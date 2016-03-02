@@ -31,11 +31,11 @@ bin/ucore.img
 |	|
 |	|>	obj/boot/bootasm.o, obj/boot/bootmain.o
 |	|	| 生成bootasm.o,bootmain.o的相关makefile代码为
-|	|	| bootfiles = $(call listf_cc,boot) 
+|	|	| bootfiles = $(call listf_cc,boot)
 |	|	| $(foreach f,$(bootfiles),$(call cc_compile,$(f),$(CC),\
 |	|	|	$(CFLAGS) -Os -nostdinc))
 |	|	| 实际代码由宏批量生成
-|	|	| 
+|	|	|
 |	|	| 生成bootasm.o需要bootasm.S
 |	|	| 实际命令为
 |	|	| gcc -Iboot/ -fno-builtin -Wall -ggdb -m32 -gstabs \
@@ -49,7 +49,7 @@ bin/ucore.img
 |	|	|	-fno-stack-protector  不生成用于检测缓冲区溢出的代码。这是for 应用程序的，我们是编译内核，ucore内核好像还用不到此功能。
 |	|	| 	-Os  为减小代码大小而进行优化。根据硬件spec，主引导扇区只有512字节，我们写的简单bootloader的最终大小不能大于510字节。
 |	|	| 	-I<dir>  添加搜索头文件的路径
-|	|	| 
+|	|	|
 |	|	| 生成bootmain.o需要bootmain.c
 |	|	| 实际命令为
 |	|	| gcc -Iboot/ -fno-builtin -Wall -ggdb -m32 -gstabs -nostdinc \
@@ -63,7 +63,7 @@ bin/ucore.img
 |	|	| 生成sign工具的makefile代码为
 |	|	| $(call add_files_host,tools/sign.c,sign,sign)
 |	|	| $(call create_target_host,sign,sign)
-|	|	| 
+|	|	|
 |	|	| 实际命令为
 |	|	| gcc -Itools/ -g -Wall -O2 -c tools/sign.c \
 |	|	| 	-o obj/sign/tools/sign.o
@@ -97,13 +97,13 @@ bin/ucore.img
 |	| 	@$(OBJDUMP) -S $@ > $(call asmfile,kernel)
 |	| 	@$(OBJDUMP) -t $@ | $(SED) '1,/SYMBOL TABLE/d; s/ .* / /; \
 |	| 		/^$$/d' > $(call symfile,kernel)
-|	| 
+|	|
 |	| 为了生成kernel，首先需要 kernel.ld init.o readline.o stdio.o kdebug.o
 |	|	kmonitor.o panic.o clock.o console.o intr.o picirq.o trap.o
 |	|	trapentry.o vectors.o pmm.o  printfmt.o string.o
 |	| kernel.ld已存在
 |	|
-|	|>	obj/kern/*/*.o 
+|	|>	obj/kern/*/*.o
 |	|	| 生成这些.o文件的相关makefile代码为
 |	|	| $(call add_files_cc,$(call listf_cc,$(KSRCDIR)),kernel,\
 |	|	|	$(KCFLAGS))
@@ -116,7 +116,7 @@ bin/ucore.img
 |	|	|		-Ilibs/ -Ikern/debug/ -Ikern/driver/ \
 |	|	|		-Ikern/trap/ -Ikern/mm/ -c kern/init/init.c \
 |	|	|		-o obj/kern/init/init.o
-|	| 
+|	|
 |	| 生成kernel时，makefile的几条指令中有@前缀的都不必需
 |	| 必需的命令只有
 |	| ld -m    elf_i386 -nostdlib -T tools/kernel.ld -o bin/kernel \
@@ -154,7 +154,7 @@ bin/ucore.img
 [练习2.1] 从 CPU 加电后执行的第一条指令开始,单步跟踪 BIOS 的执行。
 
 练习2可以单步跟踪，方法如下：
- 
+
 1 修改 lab1/tools/gdbinit,内容为:
 ```
 set architecture i8086
@@ -201,7 +201,7 @@ si
 	x /2i $pc  //显示当前eip处的汇编指令
 	set architecture i386  //设置当前调试的CPU是80386
 ```
-	
+
 运行"make debug"便可得到
 
 ```
@@ -211,7 +211,7 @@ si
 	   0x7c02:      xor    %eax,%eax
 	   0x7c04:      mov    %eax,%ds
 	   0x7c06:      mov    %eax,%es
-	   0x7c08:      mov    %eax,%ss 
+	   0x7c08:      mov    %eax,%ss
 	   0x7c0a:      in     $0x64,%al
 	   0x7c0c:      test   $0x2,%al
 	   0x7c0e:      jne    0x7c0a
@@ -231,73 +231,73 @@ si
 便可以在q.log中读到"call bootmain"前执行的命令
 ```
 	----------------
-	IN: 
+	IN:
 	0x00007c00:  cli    
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c01:  cld    
 	0x00007c02:  xor    %ax,%ax
 	0x00007c04:  mov    %ax,%ds
 	0x00007c06:  mov    %ax,%es
 	0x00007c08:  mov    %ax,%ss
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c0a:  in     $0x64,%al
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c0c:  test   $0x2,%al
 	0x00007c0e:  jne    0x7c0a
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c10:  mov    $0xd1,%al
 	0x00007c12:  out    %al,$0x64
 	0x00007c14:  in     $0x64,%al
 	0x00007c16:  test   $0x2,%al
 	0x00007c18:  jne    0x7c14
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c1a:  mov    $0xdf,%al
 	0x00007c1c:  out    %al,$0x60
 	0x00007c1e:  lgdtw  0x7c6c
 	0x00007c23:  mov    %cr0,%eax
 	0x00007c26:  or     $0x1,%eax
 	0x00007c2a:  mov    %eax,%cr0
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c2d:  ljmp   $0x8,$0x7c32
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c32:  mov    $0x10,%ax
 	0x00007c36:  mov    %eax,%ds
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c38:  mov    %eax,%es
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c3a:  mov    %eax,%fs
 	0x00007c3c:  mov    %eax,%gs
 	0x00007c3e:  mov    %eax,%ss
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c40:  mov    $0x0,%ebp
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007c45:  mov    $0x7c00,%esp
 	0x00007c4a:  call   0x7d0d
-	
+
 	----------------
-	IN: 
+	IN:
 	0x00007d0d:  push   %ebp
 ```
 
@@ -323,20 +323,20 @@ si
 可以访问4G的内存空间。
 ```
 	seta20.1:               # 等待8042键盘控制器不忙
-	    inb $0x64, %al      # 
+	    inb $0x64, %al      #
 	    testb $0x2, %al     #
 	    jnz seta20.1        #
-	
+
 	    movb $0xd1, %al     # 发送写8042输出端口的指令
 	    outb %al, $0x64     #
-	
+
 	seta20.1:               # 等待8042键盘控制器不忙
-	    inb $0x64, %al      # 
+	    inb $0x64, %al      #
 	    testb $0x2, %al     #
 	    jnz seta20.1        #
-	
+
 	    movb $0xdf, %al     # 打开A20
-	    outb %al, $0x60     # 
+	    outb %al, $0x60     #
 ```
 
 初始化GDT表：一个简单的GDT表和其描述符已经静态储存在引导区中，载入即可
@@ -384,7 +384,7 @@ si
 	static void
 	readsect(void *dst, uint32_t secno) {
 	    waitdisk();
-	
+
 	    outb(0x1F2, 1);                         // 设置读取扇区的数目为1
 	    outb(0x1F3, secno & 0xFF);
 	    outb(0x1F4, (secno >> 8) & 0xFF);
@@ -396,7 +396,7 @@ si
 	        //   28位(=0)表示访问"Disk 0"
 	        //   0-27位是28位的偏移量
 	    outb(0x1F7, 0x20);                      // 0x20命令，读取扇区
-	
+
 	    waitdisk();
 
 	    insl(0x1F0, dst, SECTSIZE / 4);         // 读取到dst位置，
@@ -409,13 +409,13 @@ readseg简单包装了readsect，可以从设备读取任意长度的内容。
 	static void
 	readseg(uintptr_t va, uint32_t count, uint32_t offset) {
 	    uintptr_t end_va = va + count;
-	
+
 	    va -= offset % SECTSIZE;
-	
-	    uint32_t secno = (offset / SECTSIZE) + 1; 
+
+	    uint32_t secno = (offset / SECTSIZE) + 1;
 	    // 加1因为0扇区被引导占用
 	    // ELF文件从1扇区开始
-	
+
 	    for (; va < end_va; va += SECTSIZE, secno ++) {
 	        readsect((void *)va, secno);
 	    }
@@ -428,19 +428,19 @@ readseg简单包装了readsect，可以从设备读取任意长度的内容。
 	bootmain(void) {
 	    // 首先读取ELF的头部
 	    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);
-	
+
 	    // 通过储存在头部的幻数判断是否是合法的ELF文件
 	    if (ELFHDR->e_magic != ELF_MAGIC) {
 	        goto bad;
 	    }
-	
+
 	    struct proghdr *ph, *eph;
-	
+
 	    // ELF头部有描述ELF文件应加载到内存什么位置的描述表，
 	    // 先将描述表的头地址存在ph
 	    ph = (struct proghdr *)((uintptr_t)ELFHDR + ELFHDR->e_phoff);
 	    eph = ph + ELFHDR->e_phnum;
-	
+
 	    // 按照描述表将ELF文件中数据载入内存
 	    for (; ph < eph; ph ++) {
 	        readseg(ph->p_va & 0xFFFFFF, ph->p_memsz, ph->p_offset);
@@ -450,7 +450,7 @@ readseg简单包装了readsect，可以从设备读取任意长度的内容。
 
 	    // 根据ELF头部储存的入口信息，找到内核的入口
 	    ((void (*)(void))(ELFHDR->e_entry & 0xFFFFFF))();
-	
+
 	bad:
 	    outw(0x8A00, 0x8A00);
 	    outw(0x8A00, 0x8E00);
@@ -459,8 +459,8 @@ readseg简单包装了readsect，可以从设备读取任意长度的内容。
 ```
 
 
-## [练习5] 
-实现函数调用堆栈跟踪函数 
+## [练习5]
+实现函数调用堆栈跟踪函数
 
 ss:ebp指向的堆栈位置储存着caller的ebp，以此为线索可以得到所有使用堆栈的函数ebp。
 ss:ebp+4指向caller调用时的eip，ss:ebp+8等是（可能的）参数。
@@ -527,7 +527,7 @@ call指令压栈，所以bootmain中ebp为0x7bf8。
 	    "sub $0x8, %%esp \n"
 	    "int %0 \n"
 	    "movl %%ebp, %%esp"
-	    : 
+	    :
 	    : "i"(T_SWITCH_TOU)
 	);
 ```
@@ -538,7 +538,7 @@ call指令压栈，所以bootmain中ebp为0x7bf8。
 	asm volatile (
 	    "int %0 \n"
 	    "movl %%ebp, %%esp \n"
-	    : 
+	    :
 	    : "i"(T_SWITCH_TOK)
 	);
 ```
@@ -547,4 +547,3 @@ call指令压栈，所以bootmain中ebp为0x7bf8。
 ```
 	tf->tf_eflags |= 0x3000;
 ```
-
