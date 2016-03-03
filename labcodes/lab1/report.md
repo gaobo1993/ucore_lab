@@ -10,8 +10,7 @@ $(UCOREIMG): $(kernel) $(bootblock)
 	$(V)dd if=$(bootblock) of=$@ conv=notrunc
 	$(V)dd if=$(kernel) of=$@ seek=1 conv=notrunc
 ```
-　　这里的三条指令的含义首先是将ucore.img先拷贝为全0(10000个块），然后将bootblock拷贝到第一个块里（conv=notrunc的含义是只修改目标文件对应的数据而不截短文件），最后跳过一个块（seek=1），把kernel写入第二个块里。
-由这里的依赖关系可知，要想生成ucore.img,首先需要生成kernel和bootblock两个模块。
+　　这里的三条指令的含义首先是将ucore.img拷贝为全0(10000个块），然后将bootblock拷贝到ucore.img中（conv=notrunc的含义是只修改目标文件对应的数据而不截短文件），最后跳过一个块（seek=1），把kernel写入第二个块里。
 
 ***kernel模块***  
 生成bin/kernel的代码如下：
@@ -41,7 +40,7 @@ gcc -Ikern/init/ -fno-builtin -Wall -ggdb -m32 -gstabs -nostdinc  -fno-stack-pro
 其中
 + -Ikern/init/等指定了头文件所在的文件夹  
 + -fno-builtin不使用不用__builtint_修饰的内建函数  
-+ -Wall显示所有警告信息  
++ -Wall显示警告  
 + -ggdb产生gdb使用的调试信息  
 + -m32生成32位代码
 + -gstabs生成stabs格式的调试信息
@@ -106,7 +105,7 @@ bin/sign obj/bootblock.out bin/bootblock
 分析sign.c文件的结构：  
 　　首先通过fread读入文件，并要求该文件的大小不超过510字节，然后开辟一个512字节大小的空间，在第31行和第32行将最后两个字节填充成0x55和0xAA写入输出文件中，因此得到符合规范的硬盘主引导扇区的特征是有512个字节且最后两个字节为0x55和0xAA。  
 ##练习二##
-*注：这里的调试命令参考了答案和视频中的内容*
+<!-- *注：这里的调试命令参考了答案和视频中的内容* -->
 ####1####
 将Makefile的debug部分修改如下：
 ```
@@ -228,9 +227,9 @@ IN:
 
 ----------------
 ```
-与bootasm.S和bootblock.asm比较，发现实现执行的代码是有对应的地址的，而在bootasm.S中没有对应的实际地址。另外，在bootasm.S中汇编指令的后缀（w、b）等都没有了，实际执行的指令和是相同的。  
+与bootasm.S和bootblock.asm比较，发现实现执行的代码相比于bootasm.S中的代码赋予了实际的地址。同时，在bootasm.S中汇编指令的后缀（w、b）等都没有了，实际执行的指令和是相同的。  
 ####4####
-　　这里选用练习五里编写的idt_init函数处作为断点进行测试。  
+　　选用练习五里编写的idt_init函数处作为断点进行测试。  
 　　使用命令`b idt_init`设置断点，并通过`c`来执行程序，发现程序停止在该函数入口处，结果如下：  
 > (gdb) b idt_init  
 > Breakpoint 2 at 0x1017ff: file kern/trap/trap.c, line 36.  
@@ -256,7 +255,7 @@ IN:
 开始的时候段寄存器cs为0，指令寄存器ip为0x7c00，这是开始执行指令的位置。
 .globl start
 start:
-.code16                                             # 这里设置一些标记
+.code16                                             # 实模式之下的16位代码。在这里设置一些标记
     cli                                             # 禁止中断
     cld                                             # 清除方向标志
     # 把ds、es、ss段寄存器置0
@@ -401,7 +400,7 @@ readsect(void *dst, uint32_t secno) {
     }
 ```
 ####2结果####
-输出如下：
+输出如下：1k
 ```
 ebp:0x00007b08 eip:0x001009a7 args: 0x00010094 0x00000000 0x00007b38 0x00100092
     kern/debug/kdebug.c:306: print_stackframe+22
