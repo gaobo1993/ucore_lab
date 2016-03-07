@@ -1,5 +1,5 @@
-##练习一##
-####1####
+## 练习一 ##
+#### 1 ####
 
 　　执行命令`make V=`可以看到命令行中输出了执行的编译命令，对应的是Makefile里面含有$(V)的语句。
 这里结合输出和Makefile文件中的内容进行递归式的详细分析。  
@@ -101,12 +101,12 @@ objcopy -S -O binary obj/bootblock.o obj/bootblock.out
 ```
 bin/sign obj/bootblock.out bin/bootblock
 ```
-####2####
+#### 2 ####
 分析sign.c文件的结构：  
 　　首先通过fread读入文件，并要求该文件的大小不超过510字节，然后开辟一个512字节大小的空间，在第31行和第32行将最后两个字节填充成0x55和0xAA写入输出文件中，因此得到符合规范的硬盘主引导扇区的特征是有512个字节且最后两个字节为0x55和0xAA。  
-##练习二##
+## 练习二 ##
 <!-- *注：这里的调试命令参考了答案和视频中的内容* -->
-####1####
+#### 1 ####
 将Makefile的debug部分修改如下：
 ```
 debug: $(UCOREIMG)
@@ -115,7 +115,7 @@ debug: $(UCOREIMG)
     $(V)$(TERMINAL) -e "gdb -q -tui -x tools/gdbinit"
 ```
 　　这里`-D bin/q.log`是将qemu的汇编指令保存在q.log文件中，使用`make debug`运行gdb调试，结束后打开bin/q.log可以看到qemu执行的指令信息，可以看到BIOS的执行过程。
-####2####
+#### 2 ####
 修改gdb执行的指令文件（tools/gdbinit),在0x7c00处设置断点（b *0x7c00),然后用x指令显示当前的后5条指令：
 ```
 file bin/kernel
@@ -137,7 +137,7 @@ x /5i $pc
 > (gdb)  
 
 和bootasm.S里的start函数比较发现完全符合，在0x7c00处的断点正常。
-####3####
+#### 3 ####
 　　在`make debug`执行的时候可通过`si`指令单步执行机器指令，通过`x`指令查看实际执行的代码。
 也可在qemu的q.log文件中查找执行的代码如下：
 ```
@@ -228,7 +228,7 @@ IN:
 ----------------
 ```
 与bootasm.S和bootblock.asm比较，发现实现执行的代码相比于bootasm.S中的代码赋予了实际的地址。同时，在bootasm.S中汇编指令的后缀（w、b）等都没有了，实际执行的指令和是相同的。  
-####4####
+#### 4 ####
 　　选用练习五里编写的idt_init函数处作为断点进行测试。  
 　　使用命令`b idt_init`设置断点，并通过`c`来执行程序，发现程序停止在该函数入口处，结果如下：  
 > (gdb) b idt_init  
@@ -248,7 +248,7 @@ IN:
 
 可以看出，这正是调用函数时的汇编指令，也是idt_init向下执行的位置，测试正常。  
 
-##练习三##
+## 练习三 ##
 　　具体过程体现在lab1的boot/bootasm.S文件中，它完成了从CPU开始运行、设置A20地址线、切换到保护模式
 直到调用bootmain主函数的过程。代码分析如下：
 ```
@@ -382,8 +382,8 @@ readsect(void *dst, uint32_t secno) {
 
 
 
-##练习五##
-####1编码过程####
+## 练习五 ##
+#### 1.编码过程 ####
 根据注释中的提示可以得到如下代码：
 ```
     uint32_t ebp = read_ebp();                  //通过read_ebp和read_eip获得ebp、eip两个寄存器
@@ -399,7 +399,7 @@ readsect(void *dst, uint32_t secno) {
         if (ebp == 0) break;                    //如果ebp为0，证明已经回溯到了最外层，下面再输出就无意义了
     }
 ```
-####2结果####
+#### 2.结果 ####
 输出如下：1k
 ```
 ebp:0x00007b08 eip:0x001009a7 args: 0x00010094 0x00000000 0x00007b38 0x00100092
@@ -420,12 +420,12 @@ ebp:0x00007bf8 eip:0x00007d68 args: 0xc031fcfa 0xc08ed88e 0x64e4d08e 0xfa7502a8
     <unknow>: -- 0x00007d67 --
 ```
 　　和文档中给出的结果类似，也和从kern_init开始的调用过程（从grade_backtrace->grade_backtrace0->grade_backtrace1->grade_backtrace2->mon_backtrace->print_stackframe)相同，结果正确。
-####3解释####
+#### 3 ####
 　　对结果中最后一行的解释：可以看到最后一行ebp的值为0x7bf8。根据代码的内容，再下一个ebp就是0，也就是最开始的初始化的堆栈的位置（bootmain.S中将ebp设为0，然后call bootmain）。由此可见，这里最后一行就是bootmain所在处。
 由于在call bootmain之前先交esp栈顶指针设置为了start所在的0x7c00，那么在call bootmain时先将返回地址压栈，再将old ebp压栈，所以当前的ebp应为0x7bf8。
 
-##练习六##
-####1####
+## 练习六 ##
+#### 1 ####
 中断向量表(IDT)定义在trap.c中的idt变量中，idt的类型为gatedesc,查看gatedesc的定义为：
 ```
 struct gatedesc {
@@ -443,7 +443,7 @@ struct gatedesc {
 这里16+16+5+3+4+1+2+1+16=64 bit=8 B，因此一个表项占8个字节。
 其中第2、3字节为段选择子，第0-1字节为偏移的第16位，第6-7字节为偏移的高16位，通过这些信息可以得到处理代码的入口。
 
-####2####
+#### 2 ####
 代码如下：
 ```
     //声明使用中断服务例程的位置表
@@ -459,13 +459,13 @@ struct gatedesc {
     lidt(&idt_pd);
 }
 ```
-####3####
+#### 3 ####
 实现思路：  
 　　在trap_dispatch函数中，首先ticks全局变量加1，然后判断是否到达需要输出的条件（即ticks == TICK_NUM），
 如果满足，则调用print_ticks()输出，并将ticks置0，等待下一次输出。
 
 
-##练习七##
+## 练习七 challenge ##
 
 
 `/kern/trap/trap.c`中：  
