@@ -369,23 +369,33 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
      *   PTE_U           0x004                   // page table/directory entry flags bit : User can access
      */
 #if 1
-    pde_t *pdep = (pgdir + PDX(la));   // (1) find page directory entry
-    struct Page *page = NULL;
-    if (!((*pdep) & PTE_P)) {              // (2) check if entry is not present
-        if (!create) {                  // (3) check if creating is needed, then alloc page for page table
-            return NULL;
-        }
-        page = alloc_page();
-        set_page_ref(page, 1); // (4) set page reference
-        uintptr_t pa = page2pa(page); // (5) get linear address of page
-        memset(KADDR(pa), 0, PGSIZE); // (6) clear page content using memset, MUST use virtual address
-        *pdep = (pa | PTE_U | PTE_P | PTE_U);                 // (7) set page directory entry's permission
+//PDX根据la获取其页目录的索引，根据此索引可以得到页目录项pde，由于可能对其进行修改
+//这里采用指向pde的指针pdep，而*pdep中保存的便是pde的真实内容
+pde_t *pdep = &pgdir[PDX(la)];
+struct Page * page;
+//根据pde中的present标志位，如果不存在，则需要创建一页（这一页的作用是用作页表）
+if (!((*pdep) & PTE_P)) {
+    //参数中指明不要创建则返回NULL
+    if (!create) {
+        return NULL;
     }
-    //现在pde的值已经存在了
-    //需要返回的值是pte的指针，这里先将pde中的地址转化为程序可用的虚拟地址
-    //将这个地址转化为pte数据类型的指针，然后根据la的值索引出对应的pte表项
-    //最后通过&取得它的指针返回
-    return &(((pte_t*)PDE_ADDR(*pdep))[PTX(la)]);          // (8) return page table entry
+    page = alloc_page();
+    //如果创建失败同样返回NULL
+    if (page == NULL) return NULL;
+    //设置ref表示该page被引用一次
+    set_page_ref(page, 1);
+    //这里获取该页的物理地址，也就是需要给pde赋的值
+    uintptr_t page_addr = page2pa(page);
+    //将页的内容清空，这里需要调用memset所以需要虚拟地址
+    memset(KADDR(page_addr), 0, PGSIZE);
+    //设置pde的同时需要设置标志位
+    *pdep = page_addr | PTE_P | PTE_W | PTE_U;
+}
+//现在pde的值已经存在了
+//需要返回的值是pte的指针，这里先将pde中的地址转化为程序可用的虚拟地址
+//将这个地址转化为pte数据类型的指针，然后根据la的值索引出对应的pte表项
+//最后通过&取得它的指针返回
+return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];
 #endif
 }
 
