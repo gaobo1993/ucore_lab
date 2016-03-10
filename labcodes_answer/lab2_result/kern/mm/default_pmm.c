@@ -5,7 +5,7 @@
 
 /* In the first fit algorithm, the allocator keeps a list of free blocks (known as the free list) and,
    on receiving a request for memory, scans along the list for the first block that is large enough to
-   satisfy the request. If the chosen block is significantly larger than that requested, then it is 
+   satisfy the request. If the chosen block is significantly larger than that requested, then it is
    usually split, and the remainder added to the list as another free block.
    Please see Page 196~198, Section 8.2 of Yan Wei Min's chinese book "Data Structure -- C programming language"
 */
@@ -137,7 +137,7 @@ default_free_pages(struct Page *base, size_t n) {
     ClearPageProperty(base);
     SetPageProperty(base);
     base->property = n;
-    
+
     p = le2page(le,page_link) ;
     if( base+n == p ){
       base->property += p->property;
@@ -217,7 +217,7 @@ basic_check(void) {
     free_page(p2);
 }
 
-// LAB2: below code is used to check the first fit allocation algorithm (your EXERCISE 1) 
+// LAB2: below code is used to check the first fit allocation algorithm (your EXERCISE 1)
 // NOTICE: You SHOULD NOT CHANGE basic_check, default_check functions!
 static void
 default_check(void) {
@@ -291,4 +291,3 @@ const struct pmm_manager default_pmm_manager = {
     .nr_free_pages = default_nr_free_pages,
     .check = default_check,
 };
-
