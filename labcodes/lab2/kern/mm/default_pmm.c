@@ -107,8 +107,8 @@ default_alloc_pages(size_t n) {
         for (; i<n; ++i) {
             nle = list_next(le);
             tempp = le2page(le, page_link);
+            ClearPageProperty(tempp);
             SetPageReserved(tempp);
-            ClearPageReserved(tempp);
             list_del(le);
             le = nle;
         }
