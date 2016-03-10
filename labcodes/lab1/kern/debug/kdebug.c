@@ -290,7 +290,7 @@ read_eip(void) {
  * */
 void
 print_stackframe(void) {
-     /* LAB1 YOUR CODE : STEP 1 */
+     /* LAB1 2012012139 : STEP 1 */
      /* (1) call read_ebp() to get the value of ebp. the type is (uint32_t);
       * (2) call read_eip() to get the value of eip. the type is (uint32_t);
       * (3) from 0 .. STACKFRAME_DEPTH
@@ -302,5 +302,16 @@ print_stackframe(void) {
       *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
       *                   the calling funciton's ebp = ss:[ebp]
       */
+    uint32_t ebp = read_ebp();                  //通过read_ebp和read_eip获得ebp、eip两个寄存器
+    uint32_t eip = read_eip();                  //的值，他们的值用来追踪函数调用栈
+    int i;
+    for (i=0; i<STACKFRAME_DEPTH; i++) {        //循环STACKFRAME_DEPTH次输出
+        cprintf("ebp:0x%08x eip:0x%08x ", ebp, eip);
+        uint32_t* arg = (uint32_t*)ebp+2;       //函数参数在ebp+2处，因为ebp+1处是返回地址
+        cprintf("args: 0x%08x 0x%08x 0x%08x 0x%08x\n", arg[0], arg[1], arg[2], arg[3]);
+        print_debuginfo(eip-1);                 //输出函数信息（即第一个局部变量）
+        eip = *((uint32_t*)ebp+1);              //ebp+1处是返回地址，也就是下一轮迭代的eip
+        ebp = *(uint32_t *)ebp;                 //ebp处指的是上一层函数的ebp处。注意这两条语句顺序不能颠倒
+        if (ebp == 0) break;                    //如果ebp为0，证明已经回溯到了最外层，下面再输出就无意义了
+    }
 }
-
