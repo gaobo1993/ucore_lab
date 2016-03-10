@@ -269,4 +269,3 @@ struct taskstate {
 #define CR4_VME         0x00000001              // V86 Mode Extensions
 
 #endif /* !__KERN_MM_MMU_H__ */
-
