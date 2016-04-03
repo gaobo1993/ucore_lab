@@ -187,8 +187,8 @@ trap_dispatch(struct trapframe *tf) {
         break;
     case IRQ_OFFSET + IRQ_TIMER:
 #if 0
-    LAB3 : If some page replacement algorithm(such as CLOCK PRA) need tick to change the priority of pages, 
-    then you can add code here. 
+    LAB3 : If some page replacement algorithm(such as CLOCK PRA) need tick to change the priority of pages,
+    then you can add code here.
 #endif
         /* LAB1 YOUR 2012012139 : STEP 3 */
         /* handle the timer interrupt */
@@ -197,9 +197,8 @@ trap_dispatch(struct trapframe *tf) {
          * (3) Too Simple? Yes, I think so!
          */
         ++ticks;
-        if (ticks == TICK_NUM) {
+        if (ticks % TICK_NUM == 0) {
           print_ticks();
-          ticks = 0;
         }
         break;
     case IRQ_OFFSET + IRQ_COM1:
@@ -249,4 +248,3 @@ trap(struct trapframe *tf) {
     // dispatch based on what type of trap occurred
     trap_dispatch(tf);
 }
-
