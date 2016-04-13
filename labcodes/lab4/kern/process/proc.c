@@ -86,7 +86,7 @@ static struct proc_struct *
 alloc_proc(void) {
     struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
     if (proc != NULL) {
-    //LAB4:EXERCISE1 YOUR CODE
+    //LAB4:EXERCISE1 2012012139
     /*
      * below fields in proc_struct need to be initialized
      *       enum proc_state state;                      // Process state
@@ -283,7 +283,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
         goto fork_out;
     }
     ret = -E_NO_MEM;
-    //LAB4:EXERCISE2 YOUR CODE
+    //LAB4:EXERCISE2 2012012139
     /*
      * Some Useful MACROs, Functions and DEFINEs, you can use them in below implementation.
      * MACROs or Functions:
@@ -308,6 +308,29 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     //    5. insert proc_struct into hash_list && proc_list
     //    6. call wakeup_proc to make the new child process RUNNABLE
     //    7. set ret vaule using child proc's pid
+    if ((proc = alloc_proc()) == NULL) {
+        cprintf("do_fork-->alloc_proc failed!\n");
+        goto fork_out;
+    }
+    if (setup_kstack(proc) != 0) {
+        cprintf("do_fork-->setup_kstack failed!\n");
+        goto bad_fork_cleanup_proc;                    //失败时只需要释放proc的空间即可
+    }
+    if (copy_mm(clone_flags, proc)) {                  //根据clone_flags复制或共享内存信息（本实验中无任何作用）
+        cprintf("do_fork-->copy_mm failed!\n");
+        goto bad_fork_cleanup_kstack;                  //失败时除了释放proc空间还要释放分配的堆栈空间
+    }
+    copy_thread(proc, stack, tf);
+    bool flag;
+    local_intr_save(flag);                             //关中断，保证如下原子操作不被中断打断而导致线程在分配了pid后却未被及时加入到线程列表中
+    proc->pid = get_pid();                             //为子线程分配一个pid，注意这一句需要在hash_proc之前，因为hash需要用到pid的值
+    hash_proc(proc);
+    list_add(&proc_list, &(proc->list_link));
+    ++nr_process;
+    local_intr_restore(flag);
+    wakeup_proc(proc);
+    ret = proc->pid;
+
 fork_out:
     return ret;
 
