@@ -106,7 +106,7 @@ alloc_proc(void) {
         proc->pid = -1;
         proc->runs = 0;
         proc->kstack = NULL;
-        proc->need_resched = true;
+        proc->need_resched = 1;
         proc->parent = NULL;
         proc->mm = NULL;
         memset(&(proc->context), 0, sizeof(proc->context));
