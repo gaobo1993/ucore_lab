@@ -55,4 +55,3 @@ struct sched_class default_sched_class = {
     .pick_next = RR_pick_next,
     .proc_tick = RR_proc_tick,
 };
-
