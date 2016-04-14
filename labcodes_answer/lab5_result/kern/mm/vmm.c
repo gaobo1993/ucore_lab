@@ -9,9 +9,9 @@
 #include <swap.h>
 #include <kmalloc.h>
 
-/* 
+/*
   vmm design include two parts: mm_struct (mm) & vma_struct (vma)
-  mm is the memory manager for the set of continuous virtual memory  
+  mm is the memory manager for the set of continuous virtual memory
   area which have the same PDT. vma is a continuous virtual memory area.
   There a linear link list for vma & a redblack link list for vma in mm.
 ---------------
@@ -52,10 +52,10 @@ mm_create(void) {
 
         if (swap_init_ok) swap_init_mm(mm);
         else mm->sm_priv = NULL;
-        
+
         set_mm_count(mm, 0);
         lock_init(&(mm->mm_lock));
-    }    
+    }
     return mm;
 }
 
@@ -150,7 +150,7 @@ mm_destroy(struct mm_struct *mm) {
     list_entry_t *list = &(mm->mmap_list), *le;
     while ((le = list_next(list)) != list) {
         list_del(le);
-        kfree(le2vma(le, list_link));  //kfree vma        
+        kfree(le2vma(le, list_link));  //kfree vma
     }
     kfree(mm); //kfree mm
     mm=NULL;
@@ -253,7 +253,7 @@ vmm_init(void) {
 static void
 check_vmm(void) {
     size_t nr_free_pages_store = nr_free_pages();
-    
+
     check_vma_struct();
     check_pgfault();
 
@@ -312,7 +312,7 @@ check_vma_struct(void) {
     for (i =4; i>=0; i--) {
         struct vma_struct *vma_below_5= find_vma(mm,i);
         if (vma_below_5 != NULL ) {
-           cprintf("vma_below_5: i %x, start %x, end %x\n",i, vma_below_5->vm_start, vma_below_5->vm_end); 
+           cprintf("vma_below_5: i %x, start %x, end %x\n",i, vma_below_5->vm_start, vma_below_5->vm_end);
         }
         assert(vma_below_5 == NULL);
     }
@@ -494,7 +494,7 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
         cprintf("get_pte in do_pgfault failed\n");
         goto failed;
     }
-    
+
     if (*ptep == 0) { // if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
         if (pgdir_alloc_page(mm->pgdir, addr, perm) == NULL) {
             cprintf("pgdir_alloc_page in do_pgfault failed\n");
@@ -513,18 +513,18 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
         } else{
            // if this pte is a swap entry, then load data from disk to a page with phy addr
            // and call page_insert to map the phy addr with logical addr
-           if(swap_init_ok) {               
+           if(swap_init_ok) {
                if ((ret = swap_in(mm, addr, &page)) != 0) {
                    cprintf("swap_in in do_pgfault failed\n");
                    goto failed;
-               }    
+               }
 
-           }  
+           }
            else {
             cprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
             goto failed;
            }
-       } 
+       }
        page_insert(mm->pgdir, page, addr, perm);
        swap_map_swappable(mm, addr, page, 1);
        page->pra_vaddr = addr;
@@ -560,4 +560,3 @@ user_mem_check(struct mm_struct *mm, uintptr_t addr, size_t len, bool write) {
     }
     return KERN_ACCESS(addr, addr + len);
 }
-
