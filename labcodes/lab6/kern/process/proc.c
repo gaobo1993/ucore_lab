@@ -87,7 +87,7 @@ static struct proc_struct *
 alloc_proc(void) {
     struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
     if (proc != NULL) {
-    //LAB4:EXERCISE1 YOUR CODE
+    //LAB4:EXERCISE1 2012012139
     /*
      * below fields in proc_struct need to be initialized
      *       enum proc_state state;                      // Process state
@@ -103,7 +103,7 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
-     //LAB5 YOUR CODE : (update LAB4 steps)
+     //LAB5 2012012139 : (update LAB4 steps)
     /*
      * below fields(add in LAB5) in proc_struct need to be initialized	
      *       uint32_t wait_state;                        // waiting state
@@ -119,6 +119,20 @@ alloc_proc(void) {
      *     uint32_t lab6_stride;                       // FOR LAB6 ONLY: the current stride of the process
      *     uint32_t lab6_priority;                     // FOR LAB6 ONLY: the priority of process, set by lab6_set_priority(uint32_t)
      */
+     proc->state = PROC_UNINIT;
+     proc->pid = -1;
+     proc->runs = 0;
+     proc->kstack = 0;
+     proc->need_resched = 0;
+     proc->parent = NULL;
+     proc->mm = NULL;
+     memset(&(proc->context), 0, sizeof(struct context));
+     proc->tf = NULL;
+     proc->cr3 = boot_cr3;
+     proc->flags = 0;
+     memset(proc->name, 0, PROC_NAME_LEN);
+     proc->wait_state = 0;
+     proc->cptr = proc->optr = proc->yptr = NULL;
     }
     return proc;
 }
@@ -380,7 +394,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
         goto fork_out;
     }
     ret = -E_NO_MEM;
-    //LAB4:EXERCISE2 YOUR CODE
+    //LAB4:EXERCISE2 2012012139
     /*
      * Some Useful MACROs, Functions and DEFINEs, you can use them in below implementation.
      * MACROs or Functions:
@@ -406,14 +420,40 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     //    6. call wakeup_proc to make the new child process RUNNABLE
     //    7. set ret vaule using child proc's pid
 
-	//LAB5 YOUR CODE : (update LAB4 steps)
+	//LAB5 2012012139 : (update LAB4 steps)
    /* Some Functions
     *    set_links:  set the relation links of process.  ALSO SEE: remove_links:  lean the relation links of process 
     *    -------------------
 	*    update step 1: set child proc's parent to current process, make sure current process's wait_state is 0
 	*    update step 5: insert proc_struct into hash_list && proc_list, set the relation links of process
     */
-	
+
+    if ((proc = alloc_proc()) == NULL) {
+        cprintf("do_fork-->alloc_proc failed!\n");
+        goto fork_out;
+    }
+
+    proc->parent = current;
+    assert(current->wait_state == 0);
+
+    if (setup_kstack(proc) != 0) {
+        cprintf("do_fork-->setup_kstack failed!\n");
+        goto bad_fork_cleanup_proc;                    //失败时只需要释放proc的空间即可
+    }
+    if (copy_mm(clone_flags, proc)) {                  //根据clone_flags复制或共享内存信息（本实验中无任何作用）
+        cprintf("do_fork-->copy_mm failed!\n");
+        goto bad_fork_cleanup_kstack;                  //失败时除了释放proc空间还要释放分配的堆栈空间
+    }
+    copy_thread(proc, stack, tf);
+    bool flag;
+    local_intr_save(flag);                             //关中断，保证如下原子操作不被中断打断而导致线程在分配了pid后却未被及时加入到线程列表中
+    proc->pid = get_pid();                             //为子线程分配一个pid，注意这一句需要在hash_proc之前，因为hash需要用到pid的值
+    hash_proc(proc);
+    set_links(proc);
+    local_intr_restore(flag);
+    wakeup_proc(proc);
+    ret = proc->pid;
+
 fork_out:
     return ret;
 
@@ -603,7 +643,7 @@ load_icode(unsigned char *binary, size_t size) {
     //(6) setup trapframe for user environment
     struct trapframe *tf = current->tf;
     memset(tf, 0, sizeof(struct trapframe));
-    /* LAB5:EXERCISE1 YOUR CODE
+    /* LAB5:EXERCISE1 2012012139
      * should set tf_cs,tf_ds,tf_es,tf_ss,tf_esp,tf_eip,tf_eflags
      * NOTICE: If we set trapframe correctly, then the user level process can return to USER MODE from kernel. So
      *          tf_cs should be USER_CS segment (see memlayout.h)
@@ -612,6 +652,11 @@ load_icode(unsigned char *binary, size_t size) {
      *          tf_eip should be the entry point of this binary program (elf->e_entry)
      *          tf_eflags should be set to enable computer to produce Interrupt
      */
+     tf->tf_cs = USER_CS;                          //CS代码段寄存器为user态的CS
+     tf->tf_ds = tf->tf_es = tf->tf_ss = USER_DS;  //其他数据段寄存器为user态的DS
+     tf->tf_esp = USTACKTOP;                       //esp为用户堆栈的栈顶指针
+     tf->tf_eip = elf->e_entry;                    //eip为开始执行时的第一条指令地址，对应elf中的entry
+     tf->tf_eflags = FL_IF;                       //为trapframe设置elfags，使得程序允许外部中断的产生
     ret = 0;
 out:
     return ret;

@@ -646,7 +646,7 @@ load_icode(unsigned char *binary, size_t size) {
      tf->tf_ds = tf->tf_es = tf->tf_ss = USER_DS;  //其他数据段寄存器为user态的DS
      tf->tf_esp = USTACKTOP;                       //esp为用户堆栈的栈顶指针
      tf->tf_eip = elf->e_entry;                    //eip为开始执行时的第一条指令地址，对应elf中的entry
-     tf->tf_eflags |= FL_IF;                       //为trapframe设置elfags，使得程序允许外部中断的产生
+     tf->tf_eflags = FL_IF;                       //为trapframe设置elfags，使得程序允许外部中断的产生
     ret = 0;
 out:
     return ret;
