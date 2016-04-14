@@ -51,7 +51,7 @@ stride_init(struct run_queue *rq) {
  *
  * proc->time_slice denotes the time slices allocation for the
  * process, which should set to rq->max_time_slice.
- * 
+ *
  * hint: see proj13.1/libs/skew_heap.h for routines of the priority
  * queue structures.
  */
@@ -116,7 +116,7 @@ stride_pick_next(struct run_queue *rq) {
 
      if (le == &rq->run_list)
           return NULL;
-     
+
      struct proc_struct *p = le2proc(le, run_link);
      le = list_next(le);
      while (le != &rq->run_list)
@@ -160,4 +160,3 @@ struct sched_class default_sched_class = {
      .pick_next = stride_pick_next,
      .proc_tick = stride_proc_tick,
 };
-
