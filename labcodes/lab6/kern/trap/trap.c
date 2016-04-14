@@ -241,7 +241,10 @@ trap_dispatch(struct trapframe *tf) {
 	     * sched_class_proc_tick
          */
         ++ticks;
-        assert(current != NULL);
+        bool flag;
+        local_intr_save(flag);
+        sched_class_proc_tick(current);
+        local_intr_restore(flag);
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
